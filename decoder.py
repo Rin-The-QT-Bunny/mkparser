@@ -34,17 +34,21 @@ class Decoder(nn.Module):
         self.signal_proj = FCBlock(132,4,s_dim,latent_dim)
         self.repeater = FCBlock(132,3,s_dim+s_dim,s_dim)
         self.logprob = 0
-    def forward(self,x,token_features,keys):
+    def forward(self,x,token_features,keys,dfs_seq = None):
         start_node = FuncNode("root")
         self.counter = 0;self.logprob = 0
         def parse_node(node,s):
             # input the current processing node and the semantics vector
             K = self.key_proj(token_features);S = self.signal_proj(s)
             # [N,z] [1,z]
-            operator_distribution =  torch.softmax(torch.cosine_similarity(K,S),0)
-    
+            operator_distribution =  torch.softmax(9*torch.cosine_similarity(K,S),0)
             # get the pdf of operators
-            if (self.monte_carlo_enabled):
+            if (dfs_seq != None):
+                dfs_index =keys.index(dfs_seq[self.counter])
+                token_chosen = keys[dfs_index]
+                self.counter += 1
+                self.logprob -= torch.log(operator_distribution[dfs_index])
+            elif (self.monte_carlo_enabled):
                 # choose the one with the maximum prob
                 max_index = np.argmax(operator_distribution.detach().numpy())
                 token_chosen = keys[max_index]
@@ -83,9 +87,15 @@ input_signal = torch.randn([1,32])
 
 
 
+optim = torch.optim.Adam(model.parameters(),lr=2e-3)
+for epoch in range(1000):
+    optim.zero_grad()
+    p,l = model(input_signal,token_features,["+","1","2"],["+","+","1","2","+","2","1"])
+    l.backward()
+    optim.step()
+    if (epoch%100==0):
+        print(p,l)
+
 model.monte_carlo_enabled = False
-p,l = model(input_signal,token_features,["+","1","2"])
-print(p)
-model.monte_carlo_enabled = True
 p,l = model(input_signal,token_features,["+","1","2"])
 print(p)
