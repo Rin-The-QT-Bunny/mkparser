@@ -60,6 +60,6 @@ for epoch in range(200):
 
 model.monte_carlo_enabled = False
 p,l = model("I am mal ganis")
-print(p)
+print(p,l)
 p,l = model("I am melkor")
-print(p)
+print(p,l)
