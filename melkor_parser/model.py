@@ -26,8 +26,13 @@ class LanguageParser(nn.Module):
         self.vector_construtor = VectorConstructor(word_dim,corpus)
         self.encoder = GRUEncoder(word_dim,signal_dim)
         self.decoder = decoder
-        self.token_features = nn.Parameter(torch.randn([3,42]))
-        self.token_keys = ["+","1","2"]
+        cfg = self.decoder.cfg
+        self.token_keys = []
+        for term in cfg.cfg_diction:
+            if not term in self.token_keys:
+                self.token_keys.append(term)
+        L = len(self.token_keys)
+        self.token_features = nn.Parameter(torch.randn([L,self.decoder.k_dim]))
     def forward(self,sentence,dfs_seq = None):
         z_code = self.encoder(self.vector_construtor(sentence))
         p,l = self.decoder(z_code,self.token_features,self.token_keys,dfs_seq)

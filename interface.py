@@ -1,4 +1,4 @@
-from model import *
+from melkor_parser.model import *
 
 corpus = ["I am melkor",
           "I am mal ganis"]
@@ -15,15 +15,13 @@ def make_melkor_parser(corpus,cfg_diction,word_dim=256,signal_dim=32,key_dim=42,
 model = make_melkor_parser(corpus,cfg_diction,signal_dim=132,key_dim=44)
 
 optim = torch.optim.Adam(model.parameters(),lr=2e-3)
-for epoch in range(200):
+for epoch in range(100):
     optim.zero_grad()
     p,l = model("I am mal ganis",["+","+","1","2","+","2","1"])
     p2,l2 = model("I am melkor",["+","1","2"])
     l = l + l2
     l.backward()
     optim.step()
-    if (epoch%100==0):
-        print(p,l)
 
 model.monte_carlo_enabled = False
 p,l = model("I am mal ganis")

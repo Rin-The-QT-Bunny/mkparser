@@ -26,6 +26,7 @@ class ContextFreeGrammar(nn.Module):
 class Decoder(nn.Module):
     def __init__(self,s_dim,k_dim,latent_dim,CFG):
         super().__init__()
+        self.k_dim = k_dim
         self.cfg = CFG
         self.cfg_enabled = True
         self.counter = 0
