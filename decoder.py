@@ -74,28 +74,3 @@ class Decoder(nn.Module):
                 current_node.function = False # constants in the form of a,b,1
         parse_node(start_node,x) # parse the root node to generate a program
         return start_node.children[0],self.logprob
-
-cfg_diction = {"+":{"output_type":"int","input_types":["int","int"]},
-               "1":{"output_type":"int","input_types":None},
-               "2":{"output_type":"int","input_types":None}}
-
-cfg = ContextFreeGrammar(cfg_diction,32)
-model = Decoder(32,42,132,cfg)
-
-token_features = torch.randn([3,42])
-input_signal = torch.randn([1,32])
-
-
-
-optim = torch.optim.Adam(model.parameters(),lr=2e-3)
-for epoch in range(1000):
-    optim.zero_grad()
-    p,l = model(input_signal,token_features,["+","1","2"],["+","+","1","2","+","2","1"])
-    l.backward()
-    optim.step()
-    if (epoch%100==0):
-        print(p,l)
-
-model.monte_carlo_enabled = False
-p,l = model(input_signal,token_features,["+","1","2"])
-print(p)
