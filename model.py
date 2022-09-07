@@ -22,33 +22,44 @@ class VectorConstructor(nn.Module):
 
 corpus = ["I am melkor",
           "I am mal ganis"]
-
-vc = VectorConstructor(256,corpus)
-
 cfg_diction = {"+":{"output_type":"int","input_types":["int","int"]},
                "1":{"output_type":"int","input_types":None},
                "2":{"output_type":"int","input_types":None}}
 
 cfg = ContextFreeGrammar(cfg_diction,32)
-model = Decoder(32,42,132,cfg)
+decoder = Decoder(32,42,132,cfg)
+
+class LanguageParser(nn.Module):
+    def __init__(self,word_dim,signal_dim,decoder,corpus = []):
+        super().__init__()
+        self.vector_construtor = VectorConstructor(word_dim,corpus)
+        self.encoder = GRUEncoder(word_dim,signal_dim)
+        self.decoder = decoder
+        self.token_features = nn.Parameter(torch.randn([3,42]))
+        self.token_keys = ["+","1","2"]
+    def forward(self,sentence,dfs_seq = None):
+        z_code = self.encoder(self.vector_construtor(sentence))
+        p,l = self.decoder(z_code,self.token_features,self.token_keys,dfs_seq)
+        return p,l
 
 
-encoder = GRUEncoder(256,32)
-print(encoder(vc("I am melkor")).shape)
 
-token_features = torch.randn([3,42])
-input_signal = torch.randn([1,32])
+model = LanguageParser(256,32,decoder,corpus)
 
 
 optim = torch.optim.Adam(model.parameters(),lr=2e-3)
-for epoch in range(1000):
+for epoch in range(200):
     optim.zero_grad()
-    p,l = model(input_signal,token_features,["+","1","2"],["+","+","1","2","+","2","1"])
+    p,l = model("I am mal ganis",["+","+","1","2","+","2","1"])
+    p2,l2 = model("I am melkor",["+","1","2"])
+    l = l + l2
     l.backward()
     optim.step()
     if (epoch%100==0):
         print(p,l)
 
 model.monte_carlo_enabled = False
-p,l = model(input_signal,token_features,["+","1","2"])
+p,l = model("I am mal ganis")
+print(p)
+p,l = model("I am melkor")
 print(p)
