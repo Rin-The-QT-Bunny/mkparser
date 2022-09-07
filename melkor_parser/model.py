@@ -1,6 +1,6 @@
-from decoder import *
-from encoder import *
-from utils import *
+from .decoder import *
+from .encoder import *
+from .utils import *
 
 class VectorConstructor(nn.Module):
     def __init__(self,word_dim,corpus,max_vocab=99999):
@@ -20,15 +20,6 @@ class VectorConstructor(nn.Module):
     def get_word_vectors(self,sentence):
         return sentence
 
-corpus = ["I am melkor",
-          "I am mal ganis"]
-cfg_diction = {"+":{"output_type":"int","input_types":["int","int"]},
-               "1":{"output_type":"int","input_types":None},
-               "2":{"output_type":"int","input_types":None}}
-
-cfg = ContextFreeGrammar(cfg_diction,32)
-decoder = Decoder(32,42,132,cfg)
-
 class LanguageParser(nn.Module):
     def __init__(self,word_dim,signal_dim,decoder,corpus = []):
         super().__init__()
@@ -41,25 +32,3 @@ class LanguageParser(nn.Module):
         z_code = self.encoder(self.vector_construtor(sentence))
         p,l = self.decoder(z_code,self.token_features,self.token_keys,dfs_seq)
         return p,l
-
-
-
-model = LanguageParser(256,32,decoder,corpus)
-
-
-optim = torch.optim.Adam(model.parameters(),lr=2e-3)
-for epoch in range(200):
-    optim.zero_grad()
-    p,l = model("I am mal ganis",["+","+","1","2","+","2","1"])
-    p2,l2 = model("I am melkor",["+","1","2"])
-    l = l + l2
-    l.backward()
-    optim.step()
-    if (epoch%100==0):
-        print(p,l)
-
-model.monte_carlo_enabled = False
-p,l = model("I am mal ganis")
-print(p,l)
-p,l = model("I am melkor")
-print(p,l)
