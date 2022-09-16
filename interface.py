@@ -33,4 +33,4 @@ for epoch in range(100):
 
 model.monte_carlo_enabled = False
 for bind in data:
-    print(model(bind[0])[0])
+    print(bind[0],":",model(bind[0])[0])
